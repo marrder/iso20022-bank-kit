@@ -26,7 +26,7 @@
   ],
   "dependencies": {
     "@iso20022-bank-kit/iso20022": "0.1.0",
-    "undici": "^7.16.0"
+    "undici": "^8.12.3"
   },
   "publishConfig": {
     "access": "public",

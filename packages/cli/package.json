@@ -10,7 +10,7 @@
     "directory": "packages/cli"
   },
   "engines": {
-    "node": ">=20.19"
+    "node": ">=22"
   },
   "sideEffects": false,
   "exports": {

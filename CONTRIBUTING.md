@@ -5,7 +5,7 @@ Thanks for helping. This kit moves money, so the bar is "specified, tested, and 
 ## Setup
 
 ```sh
-nvm use            # Node 22 (20.19+ works)
+nvm use            # Node 22 or 24
 npm install
 npm run check      # lint, typecheck, unit, Gherkin, e2e, spec traceability
 ```

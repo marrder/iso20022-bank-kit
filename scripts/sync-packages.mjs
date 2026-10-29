@@ -86,7 +86,7 @@ for (const [name, p] of Object.entries(P)) {
     type: 'module',
     ...(p.private ? { private: true } : {}),
     repository: { type: 'git', url: 'git+https://github.com/marrder/iso20022-bank-kit.git', directory: dir },
-    engines: { node: '>=20.19' },
+    engines: { node: '>=22' },
     sideEffects: false,
     // "source" lets tests and dev tools run the TypeScript directly: node --conditions=source --import tsx
     exports: { '.': { source: './src/index.ts', types: './dist/index.d.ts', import: './dist/index.js' } },

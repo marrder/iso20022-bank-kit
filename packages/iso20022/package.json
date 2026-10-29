@@ -1,0 +1,34 @@
+{
+  "name": "@iso20022-bank-kit/iso20022",
+  "version": "0.1.0",
+  "description": "ISO 20022 domain model, codes, validators, and JSON message builders/parsers (pain.001, pain.002, camt.052/053/060, tsmt.038, admi.002/004).",
+  "license": "Apache-2.0",
+  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/marrder/iso20022-bank-kit.git",
+    "directory": "packages/iso20022"
+  },
+  "engines": {
+    "node": ">=20.19"
+  },
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "dependencies": {
+    "zod": "^4.2.0"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  }
+}

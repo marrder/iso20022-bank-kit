@@ -1,0 +1,20 @@
+$kind: collection
+name: iso20022-bank-kit
+description: |-
+  End-to-end checks for the iso20022-bank-kit GraphQL and MCP endpoints.
+
+  Start a server with `npm run dev` (simulated backend), select the **Local (simulated)** environment and run the folders in order: payment requests share variables.
+
+  Every request is a plain HTTP POST, so `postman collection run` works on any plan.
+variables:
+  - key: message_id
+    value: ""
+  - key: mock500_id
+    value: ""
+scripts:
+  - type: http:beforeRequest
+    language: text/javascript
+    code: |-
+      const day = (offset) => new Date(Date.now() + offset * 86400000).toISOString().slice(0, 10);
+      pm.variables.set("today", day(0));
+      pm.variables.set("yesterday", day(-1));

@@ -1,0 +1,87 @@
+$kind: http-request
+description: |-
+  Same messageId: rejected as duplicate (1010), never paid twice.
+url: "{{base_url}}/graphql"
+method: POST
+order: 11000
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "query": "mutation($c: BacConnectionInput, $input: PaymentBatchInput!) { bac(connection: $c) { initiatePayment(input: $input) { __typename ... on PaymentSubmitted { messageId eventCode } ... on PaymentRejected { duplicate bankCode description } ... on PaymentOutcomeUnknown { category httpStatus guidance } } } }",
+      "variables": {
+        "c": {
+          "environment": "{{bac_environment}}",
+          "clientId": "{{bac_client_id}}",
+          "clientSecret": "{{bac_client_secret}}",
+          "clientBic": "{{bac_client_bic}}",
+          "ownerBic": "{{bac_owner_bic}}"
+        },
+        "input": {
+          "messageId": "{{message_id}}",
+          "country": "HN",
+          "debtorName": "Example Corp",
+          "debtorAccount": {
+            "number": "999888666"
+          },
+          "requestedExecutionDate": "{{today}}",
+          "transfers": [
+            {
+              "endToEndId": "{{message_id}}-1",
+              "route": "INTRABANK",
+              "amount": "100.00",
+              "currency": "HNL",
+              "creditor": {
+                "name": "Supplier One"
+              },
+              "creditorAccount": {
+                "number": "999888777"
+              },
+              "creditorAccountType": "CHECKING"
+            },
+            {
+              "endToEndId": "{{message_id}}-2",
+              "route": "DOMESTIC_CLEARING",
+              "creditorBankCode": "001",
+              "amount": "50.25",
+              "currency": "HNL",
+              "creditor": {
+                "name": "Supplier Two"
+              },
+              "creditorAccount": {
+                "number": "123456"
+              }
+            },
+            {
+              "endToEndId": "{{message_id}}-3",
+              "route": "CROSS_BORDER",
+              "creditorBankBic": "SIMBUS33XXX",
+              "amount": "200.00",
+              "currency": "USD",
+              "creditor": {
+                "name": "Overseas Supplier",
+                "address": {
+                  "town": "Miami",
+                  "country": "US",
+                  "line": "1 Example Way"
+                }
+              },
+              "creditorAccount": {
+                "number": "555000111"
+              }
+            }
+          ]
+        }
+      }
+    }
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test("HTTP 200", () => pm.response.to.have.status(200));
+      pm.test("no GraphQL errors", () => pm.expect(pm.response.json().errors).to.be.undefined);
+      const r = pm.response.json().data.bac.initiatePayment;
+      pm.test("duplicate", () => { pm.expect(r.__typename).to.eql("PaymentRejected"); pm.expect(r.duplicate).to.eql(true); pm.expect(r.bankCode).to.eql("1010"); });

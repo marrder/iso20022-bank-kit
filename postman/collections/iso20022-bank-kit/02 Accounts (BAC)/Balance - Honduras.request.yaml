@@ -1,0 +1,33 @@
+$kind: http-request
+description: |-
+  Available balance (camt.052).
+url: "{{base_url}}/graphql"
+method: POST
+order: 3000
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "query": "query($c: BacConnectionInput) { bac(connection: $c) { balance(country: HN, account: { number: \"999888666\" }) { country balances { type amount currency creditDebit } } } }",
+      "variables": {
+        "c": {
+          "environment": "{{bac_environment}}",
+          "clientId": "{{bac_client_id}}",
+          "clientSecret": "{{bac_client_secret}}",
+          "clientBic": "{{bac_client_bic}}",
+          "ownerBic": "{{bac_owner_bic}}"
+        }
+      }
+    }
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test("HTTP 200", () => pm.response.to.have.status(200));
+      pm.test("no GraphQL errors", () => pm.expect(pm.response.json().errors).to.be.undefined);
+      const b = pm.response.json().data.bac.balance.balances[0];
+      pm.test("ITAV in HNL", () => { pm.expect(b.type).to.eql("INTERIM_AVAILABLE"); pm.expect(b.currency).to.eql("HNL"); });
+      pm.test("amount is a decimal string", () => pm.expect(b.amount).to.match(/^\d+\.\d{2}$/));

@@ -1,0 +1,37 @@
+{
+  "name": "@iso20022-bank-kit/connector-bac",
+  "version": "0.1.0",
+  "description": "Unofficial BAC Credomatic API Center 2.0 connector plugin (PA, CR, NI, HN, SV, GT).",
+  "license": "Apache-2.0",
+  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/marrder/iso20022-bank-kit.git",
+    "directory": "packages/connector-bac"
+  },
+  "engines": {
+    "node": ">=20.19"
+  },
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "dependencies": {
+    "@iso20022-bank-kit/core": "0.1.0",
+    "@iso20022-bank-kit/iso20022": "0.1.0",
+    "@iso20022-bank-kit/swift-mt": "0.1.0",
+    "@iso20022-bank-kit/simulator": "0.1.0"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  }
+}

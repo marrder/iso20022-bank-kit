@@ -1,0 +1,13 @@
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
+.env
+.env.*
+*.zip
+deploy/cloudformation/packaged.yaml
+packages/lambda/build/
+
+# Bank-provided documentation and examples are not redistributable. Keep them here, locally.
+fixtures/private/*
+!fixtures/private/README.md

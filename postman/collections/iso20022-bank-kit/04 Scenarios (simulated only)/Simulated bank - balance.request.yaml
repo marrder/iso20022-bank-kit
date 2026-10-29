@@ -1,0 +1,23 @@
+$kind: http-request
+description: |-
+  The bank-less simulated connector (sim) for app development.
+url: "{{base_url}}/graphql"
+method: POST
+order: 15000
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "query": "{ sim { balance(country: US, account: { number: \"42\" }) { balances { amount currency } } } }",
+      "variables": {}
+    }
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test("HTTP 200", () => pm.response.to.have.status(200));
+      pm.test("no GraphQL errors", () => pm.expect(pm.response.json().errors).to.be.undefined);
+      pm.test("USD", () => pm.expect(pm.response.json().data.sim.balance.balances[0].currency).to.eql("USD"));

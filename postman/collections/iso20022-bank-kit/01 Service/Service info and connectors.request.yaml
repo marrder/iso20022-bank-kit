@@ -1,0 +1,24 @@
+$kind: http-request
+description: |-
+  Backend (SIMULATED or LIVE) and installed connectors with their countries and capabilities.
+url: "{{base_url}}/graphql"
+method: POST
+order: 1000
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "query": "{ serviceInfo { backend version } connectors { id name countries { code bankBic localCurrency requiresIban } capabilities { statementFormats routes } } }",
+      "variables": {}
+    }
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test("HTTP 200", () => pm.response.to.have.status(200));
+      pm.test("no GraphQL errors", () => pm.expect(pm.response.json().errors).to.be.undefined);
+      const d = pm.response.json().data;
+      pm.test("bac connector installed", () => pm.expect(d.connectors.map((c) => c.id)).to.include("bac"));

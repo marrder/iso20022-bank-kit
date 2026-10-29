@@ -1,0 +1,46 @@
+{
+  "name": "@iso20022-bank-kit/cli",
+  "version": "0.1.0",
+  "description": "ibk command line: validate messages, convert MT940 to camt.053, check IBAN/BIC, build pain.001, serve GraphQL+MCP, run conformance.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/marrder/iso20022-bank-kit.git",
+    "directory": "packages/cli"
+  },
+  "engines": {
+    "node": ">=20.19"
+  },
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "bin": {
+    "ibk": "./dist/bin.js"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "dependencies": {
+    "@iso20022-bank-kit/core": "0.1.0",
+    "@iso20022-bank-kit/iso20022": "0.1.0",
+    "@iso20022-bank-kit/swift-mt": "0.1.0",
+    "@iso20022-bank-kit/simulator": "0.1.0",
+    "@iso20022-bank-kit/connector-bac": "0.1.0",
+    "@iso20022-bank-kit/conformance": "0.1.0",
+    "@iso20022-bank-kit/graphql": "0.1.0",
+    "@iso20022-bank-kit/mcp": "0.1.0",
+    "@modelcontextprotocol/node": "^2.1.0",
+    "@modelcontextprotocol/server": "^2.4.0"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  }
+}

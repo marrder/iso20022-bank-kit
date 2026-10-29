@@ -1,0 +1,63 @@
+{
+  "name": "iso20022-bank-kit-monorepo",
+  "private": true,
+  "description": "Bank-agnostic ISO 20022 toolkit: message builders and parsers, SWIFT MT940/942, a pluggable connector model, a simulated bank, GraphQL and MCP servers, a CLI, and a conformance suite.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "engines": {
+    "node": ">=20.19"
+  },
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "tsc -b",
+    "typecheck": "tsc -b && tsc -p tsconfig.test.json",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:bdd": "NODE_OPTIONS='--conditions=source --import tsx' cucumber-js",
+    "test:e2e": "vitest run --config vitest.e2e.config.ts",
+    "test:all": "npm test && npm run test:bdd && npm run test:e2e",
+    "lint": "biome check .",
+    "format": "biome check --write .",
+    "spec:trace": "node scripts/spec-trace.mjs",
+    "check": "npm run lint && npm run typecheck && npm run test:all && npm run spec:trace",
+    "dev": "node --conditions=source --import tsx packages/cli/src/bin.ts serve",
+    "ibk": "node --conditions=source --import tsx packages/cli/src/bin.ts",
+    "bundle:lambda": "node packages/lambda/scripts/bundle.mjs",
+    "changeset": "changeset",
+    "release": "npm run check && changeset publish"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.6.4",
+    "@changesets/cli": "^3.0.3",
+    "@cucumber/cucumber": "^13.3.0",
+    "@modelcontextprotocol/client": "^2.4.0",
+    "@types/chai": "^5.2.3",
+    "@types/node": "^26.6.6",
+    "@vitest/coverage-v8": "^5.0.5",
+    "chai": "^6.3.0",
+    "esbuild": "^0.28.2",
+    "tsx": "^4.23.15",
+    "typescript": "^5.9.3",
+    "vitest": "^5.0.5",
+    "yaml": "^2.9.1"
+  },
+  "keywords": [
+    "iso20022",
+    "pain.001",
+    "camt.053",
+    "mt940",
+    "swift",
+    "payments",
+    "banking",
+    "graphql",
+    "mcp",
+    "open-banking",
+    "treasury"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/marrder/iso20022-bank-kit.git"
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "name": "@iso20022-bank-kit/simulator",
+  "version": "0.1.0",
+  "description": "Deterministic simulated bank (ledger, payment lifecycle, failure scenarios) and a ready-made simulated connector.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/marrder/iso20022-bank-kit.git",
+    "directory": "packages/simulator"
+  },
+  "engines": {
+    "node": ">=20.19"
+  },
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "dependencies": {
+    "@iso20022-bank-kit/core": "0.1.0",
+    "@iso20022-bank-kit/iso20022": "0.1.0"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  }
+}

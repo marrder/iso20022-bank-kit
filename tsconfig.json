@@ -1,0 +1,15 @@
+{
+  "files": [],
+  "references": [
+    { "path": "packages/iso20022" },
+    { "path": "packages/swift-mt" },
+    { "path": "packages/core" },
+    { "path": "packages/simulator" },
+    { "path": "packages/connector-bac" },
+    { "path": "packages/conformance" },
+    { "path": "packages/graphql" },
+    { "path": "packages/mcp" },
+    { "path": "packages/cli" },
+    { "path": "packages/lambda" }
+  ]
+}

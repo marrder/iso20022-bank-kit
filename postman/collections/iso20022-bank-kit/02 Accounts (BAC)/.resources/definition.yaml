@@ -1,0 +1,5 @@
+$kind: collection
+name: "02 Accounts (BAC)"
+description: |-
+  Balances and statements through the BAC connector. CAMT053, MT940 and MT942 return the same Statement shape.
+order: 2000

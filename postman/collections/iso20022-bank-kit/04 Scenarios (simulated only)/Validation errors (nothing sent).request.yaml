@@ -1,0 +1,55 @@
+$kind: http-request
+description: |-
+  Generic and BAC rules are checked before transmission; every problem is listed.
+url: "{{base_url}}/graphql"
+method: POST
+order: 14000
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "query": "mutation($c: BacConnectionInput, $input: PaymentBatchInput!) { bac(connection: $c) { initiatePayment(input: $input) { __typename ... on PaymentSubmitted { messageId eventCode } ... on PaymentRejected { duplicate bankCode description } ... on PaymentOutcomeUnknown { category httpStatus guidance } } } }",
+      "variables": {
+        "c": {
+          "environment": "{{bac_environment}}",
+          "clientId": "{{bac_client_id}}",
+          "clientSecret": "{{bac_client_secret}}",
+          "clientBic": "{{bac_client_bic}}",
+          "ownerBic": "{{bac_owner_bic}}"
+        },
+        "input": {
+          "messageId": "INVALID-1",
+          "country": "CR",
+          "debtorName": "Example Corp",
+          "debtorAccount": {
+            "number": "999888666"
+          },
+          "requestedExecutionDate": "{{today}}",
+          "transfers": [
+            {
+              "endToEndId": "X",
+              "route": "DOMESTIC_CLEARING",
+              "amount": "0",
+              "currency": "CRC",
+              "creditor": {
+                "name": "A"
+              },
+              "creditorAccount": {
+                "number": "1"
+              }
+            }
+          ]
+        }
+      }
+    }
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test("HTTP 200", () => pm.response.to.have.status(200));
+      const e = pm.response.json().errors[0];
+      pm.test("BAD_USER_INPUT", () => pm.expect(e.extensions.code).to.eql("BAD_USER_INPUT"));
+      pm.test("several problems", () => pm.expect(e.extensions.problems.length).to.be.above(2));

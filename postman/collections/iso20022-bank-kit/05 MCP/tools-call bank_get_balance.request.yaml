@@ -1,0 +1,41 @@
+$kind: http-request
+description: |-
+  Calls a read-only tool.
+url: "{{base_url}}/mcp"
+method: POST
+order: 17000
+headers:
+  - key: Content-Type
+    value: application/json
+  - key: Accept
+    value: "application/json, text/event-stream"
+  - key: MCP-Protocol-Version
+    value: "2025-06-18"
+body:
+  type: json
+  content: |-
+    {
+      "jsonrpc": "2.0",
+      "id": 17000,
+      "method": "tools/call",
+      "params": {
+        "name": "bank_get_balance",
+        "arguments": {
+          "bank": "bac",
+          "country": "HN",
+          "account_number": "999888666",
+          "response_format": "json"
+        }
+      }
+    }
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      // MCP responses may be one SSE frame ("event: message" / "data: {...}") or plain JSON.
+      const raw = pm.response.text();
+      const rpc = raw.trim().startsWith("{") ? JSON.parse(raw) : JSON.parse(raw.split("\n").find((l) => l.startsWith("data:")).slice(5));
+      pm.test("HTTP 200", () => pm.response.to.have.status(200));
+      const r = rpc.result;
+      pm.test("not an error", () => pm.expect(r.isError).to.not.eql(true));
+      pm.test("HNL balance", () => pm.expect(r.structuredContent.balances[0].currency).to.eql("HNL"));

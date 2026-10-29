@@ -1,0 +1,5 @@
+$kind: collection
+name: "05 MCP"
+description: |-
+  Raw MCP JSON-RPC over Streamable HTTP (stateless). Credentials would go in X-Bac-* headers, never in tool arguments.
+order: 5000

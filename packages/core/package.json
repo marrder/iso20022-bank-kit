@@ -1,0 +1,35 @@
+{
+  "name": "@iso20022-bank-kit/core",
+  "version": "0.1.0",
+  "description": "Connector plugin contract, bank client with the safety rules from SPEC.md, and shared OAuth2/mTLS HTTP transport.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/marrder/iso20022-bank-kit.git",
+    "directory": "packages/core"
+  },
+  "engines": {
+    "node": ">=20.19"
+  },
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "dependencies": {
+    "@iso20022-bank-kit/iso20022": "0.1.0",
+    "undici": "^7.16.0"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  }
+}

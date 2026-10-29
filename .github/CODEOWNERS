@@ -1,0 +1,5 @@
+# Payment-critical code needs maintainer review.
+*                         @marrder
+/packages/core/           @marrder
+/spec/                    @marrder
+/deploy/                  @marrder

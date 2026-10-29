@@ -1,0 +1,27 @@
+name: New bank connector
+description: Propose or track a connector for another bank
+labels: [connector]
+body:
+  - type: input
+    id: bank
+    attributes: { label: Bank and API product }
+    validations: { required: true }
+  - type: input
+    id: countries
+    attributes: { label: Countries (ISO 3166 alpha-2) }
+  - type: checkboxes
+    id: capabilities
+    attributes:
+      label: Capabilities
+      options:
+        - label: Balance (camt.052)
+        - label: Statements (camt.053 / MT940 / MT942)
+        - label: Payment initiation (pain.001)
+        - label: Payment status (pain.002)
+  - type: checkboxes
+    id: docs
+    attributes:
+      label: Documentation
+      options:
+        - label: I will not commit the bank's documentation; fixtures will be synthetic.
+          required: true

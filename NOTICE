@@ -1,0 +1,10 @@
+iso20022-bank-kit
+Copyright 2026 The iso20022-bank-kit contributors
+
+This product is licensed under the Apache License, Version 2.0 (see LICENSE).
+
+Trademarks: "BAC", "BAC Credomatic" and other bank names are trademarks of their respective owners.
+They are used only to identify the APIs a connector targets. This project is independent and is not
+affiliated with, sponsored by, or endorsed by any bank.
+
+No bank documentation is included. All test data in this repository is synthetic.

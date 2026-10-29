@@ -1,0 +1,64 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Node ${{ matrix.node }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [20, 22]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - name: Unit tests
+        run: npx vitest run --coverage
+      - name: Gherkin acceptance tests
+        run: npm run test:bdd
+      - name: End-to-end tests
+        run: npm run test:e2e
+      - name: Spec traceability
+        run: npm run spec:trace
+      - name: Conformance report (BAC, Costa Rica)
+        run: npm run ibk -- conformance --connector bac --country CR --iban CR41010200009998886660
+
+  infrastructure:
+    name: CloudFormation and Postman lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install cfn-lint
+      - run: cfn-lint deploy/cloudformation/template.yaml
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Lambda bundle builds
+        run: npm run bundle:lambda
+      - name: Postman collection lint
+        run: |
+          curl -o- "https://dl-cli.pstmn.io/install/linux64.sh" | sh
+          postman collection lint postman/collections/iso20022-bank-kit
+          postman environment lint postman/environments

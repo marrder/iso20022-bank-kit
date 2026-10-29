@@ -1,0 +1,5 @@
+$kind: collection
+name: "04 Scenarios (simulated only)"
+description: |-
+  Failure paths triggered by SPEC clause 11 scenario values. Only meaningful with BANK_BACKEND=simulated.
+order: 4000

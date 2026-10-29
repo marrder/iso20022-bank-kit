@@ -1,0 +1,34 @@
+$kind: http-request
+description: |-
+  Yesterday's statement as MT942.
+url: "{{base_url}}/graphql"
+method: POST
+order: 7000
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "query": "query($c: BacConnectionInput, $d: Date!) { bac(connection: $c) { statement(country: HN, account: { number: \"999888666\" }, format: MT942, fromDate: $d) { format openingBalance { amount } closingBalance { amount } entries { reference amount creditDebit transactionType } } } }",
+      "variables": {
+        "c": {
+          "environment": "{{bac_environment}}",
+          "clientId": "{{bac_client_id}}",
+          "clientSecret": "{{bac_client_secret}}",
+          "clientBic": "{{bac_client_bic}}",
+          "ownerBic": "{{bac_owner_bic}}"
+        },
+        "d": "{{yesterday}}"
+      }
+    }
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test("HTTP 200", () => pm.response.to.have.status(200));
+      pm.test("no GraphQL errors", () => pm.expect(pm.response.json().errors).to.be.undefined);
+      const s = pm.response.json().data.bac.statement;
+      pm.test("MT942", () => pm.expect(s.format).to.eql("MT942"));
+      pm.test("five seed entries", () => pm.expect(s.entries).to.have.length(5));

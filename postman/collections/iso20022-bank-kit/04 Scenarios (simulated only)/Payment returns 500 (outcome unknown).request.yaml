@@ -1,0 +1,91 @@
+$kind: http-request
+description: |-
+  MOCK-500-*: booked, then HTTP 500.
+url: "{{base_url}}/graphql"
+method: POST
+order: 12000
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "query": "mutation($c: BacConnectionInput, $input: PaymentBatchInput!) { bac(connection: $c) { initiatePayment(input: $input) { __typename ... on PaymentSubmitted { messageId eventCode } ... on PaymentRejected { duplicate bankCode description } ... on PaymentOutcomeUnknown { category httpStatus guidance } } } }",
+      "variables": {
+        "c": {
+          "environment": "{{bac_environment}}",
+          "clientId": "{{bac_client_id}}",
+          "clientSecret": "{{bac_client_secret}}",
+          "clientBic": "{{bac_client_bic}}",
+          "ownerBic": "{{bac_owner_bic}}"
+        },
+        "input": {
+          "messageId": "{{mock500_id}}",
+          "country": "HN",
+          "debtorName": "Example Corp",
+          "debtorAccount": {
+            "number": "999888666"
+          },
+          "requestedExecutionDate": "{{today}}",
+          "transfers": [
+            {
+              "endToEndId": "{{mock500_id}}-1",
+              "route": "INTRABANK",
+              "amount": "100.00",
+              "currency": "HNL",
+              "creditor": {
+                "name": "Supplier One"
+              },
+              "creditorAccount": {
+                "number": "999888777"
+              },
+              "creditorAccountType": "CHECKING"
+            },
+            {
+              "endToEndId": "{{mock500_id}}-2",
+              "route": "DOMESTIC_CLEARING",
+              "creditorBankCode": "001",
+              "amount": "50.25",
+              "currency": "HNL",
+              "creditor": {
+                "name": "Supplier Two"
+              },
+              "creditorAccount": {
+                "number": "123456"
+              }
+            },
+            {
+              "endToEndId": "{{mock500_id}}-3",
+              "route": "CROSS_BORDER",
+              "creditorBankBic": "SIMBUS33XXX",
+              "amount": "200.00",
+              "currency": "USD",
+              "creditor": {
+                "name": "Overseas Supplier",
+                "address": {
+                  "town": "Miami",
+                  "country": "US",
+                  "line": "1 Example Way"
+                }
+              },
+              "creditorAccount": {
+                "number": "555000111"
+              }
+            }
+          ]
+        }
+      }
+    }
+scripts:
+  - type: beforeRequest
+    language: text/javascript
+    code: |-
+      pm.collectionVariables.set("mock500_id", "MOCK-500-" + Date.now());
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test("HTTP 200", () => pm.response.to.have.status(200));
+      pm.test("no GraphQL errors", () => pm.expect(pm.response.json().errors).to.be.undefined);
+      const r = pm.response.json().data.bac.initiatePayment;
+      pm.test("outcome unknown", () => { pm.expect(r.__typename).to.eql("PaymentOutcomeUnknown"); pm.expect(r.httpStatus).to.eql(500); });

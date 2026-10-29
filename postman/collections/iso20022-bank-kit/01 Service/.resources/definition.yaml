@@ -1,0 +1,5 @@
+$kind: collection
+name: "01 Service"
+description: |-
+  Deployment info, installed connectors, and introspection. No bank calls.
+order: 1000

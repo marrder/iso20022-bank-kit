@@ -1,0 +1,5 @@
+$kind: collection
+name: "03 Payments (BAC)"
+description: |-
+  Submit a batch (pain.001) and track it (pain.002). Run in order.
+order: 3000

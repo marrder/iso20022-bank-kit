@@ -1,0 +1,33 @@
+$kind: http-request
+description: |-
+  Lists the tools generated from the installed connectors.
+url: "{{base_url}}/mcp"
+method: POST
+order: 16000
+headers:
+  - key: Content-Type
+    value: application/json
+  - key: Accept
+    value: "application/json, text/event-stream"
+  - key: MCP-Protocol-Version
+    value: "2025-06-18"
+body:
+  type: json
+  content: |-
+    {
+      "jsonrpc": "2.0",
+      "id": 16000,
+      "method": "tools/list",
+      "params": {}
+    }
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      // MCP responses may be one SSE frame ("event: message" / "data: {...}") or plain JSON.
+      const raw = pm.response.text();
+      const rpc = raw.trim().startsWith("{") ? JSON.parse(raw) : JSON.parse(raw.split("\n").find((l) => l.startsWith("data:")).slice(5));
+      pm.test("HTTP 200", () => pm.response.to.have.status(200));
+      const names = rpc.result.tools.map((t) => t.name);
+      pm.test("payment tool present", () => pm.expect(names).to.include("bank_initiate_payment"));
+      pm.test("no credential arguments", () => pm.expect(JSON.stringify(rpc.result.tools)).to.not.match(/client_?secret|password/i));

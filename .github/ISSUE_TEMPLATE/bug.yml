@@ -1,0 +1,21 @@
+name: Bug report
+description: Something behaves differently from SPEC.md or the docs
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: "**Security issues (duplicate payments, credential leaks, allowlist bypass): do not file here. Use Security → Report a vulnerability.** Never paste credentials, real account numbers, or bank documentation."
+  - type: input
+    id: package
+    attributes: { label: Package and version, placeholder: "@iso20022-bank-kit/core 0.1.0" }
+    validations: { required: true }
+  - type: dropdown
+    id: backend
+    attributes: { label: Backend, options: [simulated, live] }
+  - type: textarea
+    id: repro
+    attributes: { label: Steps to reproduce (simulated backend preferred) }
+    validations: { required: true }
+  - type: textarea
+    id: expected
+    attributes: { label: Expected vs actual, description: Cite the SPEC requirement (IBK-…) if one applies. }

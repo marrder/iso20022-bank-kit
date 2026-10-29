@@ -1,0 +1,31 @@
+$kind: http-request
+description: |-
+  Costa Rica accounts must be IBANs.
+url: "{{base_url}}/graphql"
+method: POST
+order: 4000
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "query": "query($c: BacConnectionInput) { bac(connection: $c) { balance(country: CR, account: { iban: \"CR41010200009998886660\" }) { account { iban currency } } } }",
+      "variables": {
+        "c": {
+          "environment": "{{bac_environment}}",
+          "clientId": "{{bac_client_id}}",
+          "clientSecret": "{{bac_client_secret}}",
+          "clientBic": "{{bac_client_bic}}",
+          "ownerBic": "{{bac_owner_bic}}"
+        }
+      }
+    }
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test("HTTP 200", () => pm.response.to.have.status(200));
+      pm.test("no GraphQL errors", () => pm.expect(pm.response.json().errors).to.be.undefined);
+      pm.test("CRC", () => pm.expect(pm.response.json().data.bac.balance.account.currency).to.eql("CRC"));

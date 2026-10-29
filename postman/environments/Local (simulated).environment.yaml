@@ -1,0 +1,26 @@
+name: "Local (simulated)"
+values:
+  - key: base_url
+    value: "http://localhost:4000"
+    enabled: true
+    type: default
+  - key: bac_environment
+    value: "SANDBOX"
+    enabled: true
+    type: default
+  - key: bac_client_id
+    value: ""
+    enabled: true
+    type: default
+  - key: bac_client_secret
+    value: ""
+    enabled: true
+    type: secret
+  - key: bac_client_bic
+    value: "DUMMYMASTER"
+    enabled: true
+    type: default
+  - key: bac_owner_bic
+    value: "DUMMYORDENA"
+    enabled: true
+    type: default

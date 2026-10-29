@@ -1,0 +1,26 @@
+name: "Deployed (live)"
+values:
+  - key: base_url
+    value: "https://<function-url-id>.lambda-url.<region>.on.aws"
+    enabled: true
+    type: default
+  - key: bac_environment
+    value: "SANDBOX"
+    enabled: true
+    type: default
+  - key: bac_client_id
+    value: ""
+    enabled: true
+    type: default
+  - key: bac_client_secret
+    value: ""
+    enabled: true
+    type: secret
+  - key: bac_client_bic
+    value: ""
+    enabled: true
+    type: default
+  - key: bac_owner_bic
+    value: ""
+    enabled: true
+    type: default

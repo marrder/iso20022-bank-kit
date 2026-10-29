@@ -1,0 +1,40 @@
+{
+  "name": "@iso20022-bank-kit/lambda",
+  "version": "0.1.0",
+  "description": "AWS Lambda entry serving GraphQL and MCP.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "private": true,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/marrder/iso20022-bank-kit.git",
+    "directory": "packages/lambda"
+  },
+  "engines": {
+    "node": ">=20.19"
+  },
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "dependencies": {
+    "@iso20022-bank-kit/core": "0.1.0",
+    "@iso20022-bank-kit/connector-bac": "0.1.0",
+    "@iso20022-bank-kit/simulator": "0.1.0",
+    "@iso20022-bank-kit/graphql": "0.1.0",
+    "@iso20022-bank-kit/mcp": "0.1.0",
+    "@aws-sdk/client-secrets-manager": "^3.700.0"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  }
+}

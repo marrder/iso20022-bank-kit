@@ -1,0 +1,242 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >-
+  iso20022-bank-kit: GraphQL (/graphql) and MCP (/mcp) over ISO 20022 bank connectors, as one Lambda function.
+  Plain CloudFormation (no SAM, no CDK). Package with `aws cloudformation package` (see README).
+
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label: { default: Backend }
+        Parameters: [BankBackend, BankConnectors, BankAllowedHosts, ConnectionSecretArn]
+      - Label: { default: MCP access (API Gateway with a JWT authorizer) }
+        Parameters: [McpJwtIssuer, McpJwtAudience, McpAllowedOrigins]
+      - Label: { default: Operations }
+        Parameters: [LogRetentionDays, AlarmTopicArn, ReservedConcurrency]
+
+Parameters:
+  BankBackend:
+    Type: String
+    AllowedValues: [simulated, live]
+    Default: simulated
+    Description: Feature flag. "simulated" never calls a bank; "live" calls the banks with the caller's (or the default) connection.
+  BankConnectors:
+    Type: String
+    Default: bac,sim
+    Description: Built-in connectors to install.
+  BankAllowedHosts:
+    Type: String
+    Default: ""
+    Description: Comma-separated allowlist for live endpoints. Empty uses each connector's defaults (e.g. *.baccredomatic.com).
+  ConnectionSecretArn:
+    Type: String
+    Default: ""
+    Description: Optional Secrets Manager secret holding default connections as JSON, e.g. {"bac":{"clientId":"...","clientSecret":"...","clientBic":"...","ownerBic":"..."}}.
+  McpJwtIssuer:
+    Type: String
+    Default: ""
+    Description: OIDC issuer URL for the MCP endpoint's JWT authorizer (e.g. your Cognito user pool or IdP). Empty skips the API Gateway endpoint.
+  McpJwtAudience:
+    Type: String
+    Default: ""
+    Description: Expected JWT audience for the MCP endpoint.
+  McpAllowedOrigins:
+    Type: String
+    Default: ""
+    Description: Browser origins allowed to call /mcp (non-browser MCP clients send no Origin).
+  LogRetentionDays:
+    Type: Number
+    Default: 30
+    AllowedValues: [1, 3, 5, 7, 14, 30, 60, 90, 180, 365]
+  AlarmTopicArn:
+    Type: String
+    Default: ""
+    Description: Optional SNS topic for alarms.
+  ReservedConcurrency:
+    Type: Number
+    Default: -1
+    Description: Reserved concurrency (-1 leaves it unreserved). Caps the load this function can put on a bank.
+
+Conditions:
+  HasSecret: !Not [!Equals [!Ref ConnectionSecretArn, ""]]
+  HasJwt: !Not [!Equals [!Ref McpJwtIssuer, ""]]
+  HasAlarmTopic: !Not [!Equals [!Ref AlarmTopicArn, ""]]
+  HasReservedConcurrency: !Not [!Equals [!Ref ReservedConcurrency, -1]]
+
+Resources:
+  LogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${AWS::StackName}
+      RetentionInDays: !Ref LogRetentionDays
+
+  FunctionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal: { Service: lambda.amazonaws.com }
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: logs
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: [logs:CreateLogStream, logs:PutLogEvents]
+                Resource: !GetAtt LogGroup.Arn
+        - !If
+          - HasSecret
+          - PolicyName: read-connection-secret
+            PolicyDocument:
+              Version: "2012-10-17"
+              Statement:
+                - Effect: Allow
+                  Action: secretsmanager:GetSecretValue
+                  Resource: !Ref ConnectionSecretArn
+          - !Ref AWS::NoValue
+
+  Function:
+    Type: AWS::Lambda::Function
+    Metadata:
+      cfn-lint:
+        config:
+          # Code is a local path on purpose; `aws cloudformation package` rewrites it.
+          ignore_checks: [W3002]
+    Properties:
+      FunctionName: !Ref AWS::StackName
+      Description: iso20022-bank-kit GraphQL + MCP
+      Runtime: nodejs22.x
+      Architectures: [arm64]
+      Handler: index.handler
+      # Local path: `aws cloudformation package` uploads it and rewrites this to S3.
+      Code: ../../packages/lambda/build
+      MemorySize: 512
+      # Bank calls time out after BANK_TIMEOUT_MS (25 s); API Gateway caps integrations at 29 s.
+      Timeout: 29
+      Role: !GetAtt FunctionRole.Arn
+      ReservedConcurrentExecutions: !If [HasReservedConcurrency, !Ref ReservedConcurrency, !Ref AWS::NoValue]
+      LoggingConfig:
+        LogGroup: !Ref LogGroup
+        LogFormat: JSON
+      Environment:
+        Variables:
+          NODE_OPTIONS: --enable-source-maps
+          BANK_BACKEND: !Ref BankBackend
+          BANK_CONNECTORS: !Ref BankConnectors
+          BANK_ALLOWED_HOSTS: !Ref BankAllowedHosts
+          BANK_TIMEOUT_MS: "25000"
+          BANK_CONNECTION_SECRET_ARN: !Ref ConnectionSecretArn
+          MCP_ALLOWED_ORIGINS: !Ref McpAllowedOrigins
+
+  # GraphQL (and MCP for SigV4-capable clients): IAM-authenticated Function URL.
+  FunctionUrl:
+    Type: AWS::Lambda::Url
+    Properties:
+      TargetFunctionArn: !GetAtt Function.Arn
+      AuthType: AWS_IAM
+
+  # MCP for OAuth/OIDC clients: HTTP API with a JWT authorizer in front of /mcp only.
+  McpApi:
+    Type: AWS::ApiGatewayV2::Api
+    Condition: HasJwt
+    Properties:
+      Name: !Sub ${AWS::StackName}-mcp
+      ProtocolType: HTTP
+
+  McpAuthorizer:
+    Type: AWS::ApiGatewayV2::Authorizer
+    Condition: HasJwt
+    Properties:
+      ApiId: !Ref McpApi
+      Name: jwt
+      AuthorizerType: JWT
+      IdentitySource: [$request.header.Authorization]
+      JwtConfiguration:
+        Issuer: !Ref McpJwtIssuer
+        Audience: [!Ref McpJwtAudience]
+
+  McpIntegration:
+    Type: AWS::ApiGatewayV2::Integration
+    Condition: HasJwt
+    Properties:
+      ApiId: !Ref McpApi
+      IntegrationType: AWS_PROXY
+      IntegrationUri: !GetAtt Function.Arn
+      PayloadFormatVersion: "2.0"
+      TimeoutInMillis: 29000
+
+  McpRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Condition: HasJwt
+    Properties:
+      ApiId: !Ref McpApi
+      RouteKey: POST /mcp
+      AuthorizationType: JWT
+      AuthorizerId: !Ref McpAuthorizer
+      Target: !Sub integrations/${McpIntegration}
+
+  McpStage:
+    Type: AWS::ApiGatewayV2::Stage
+    Condition: HasJwt
+    Properties:
+      ApiId: !Ref McpApi
+      StageName: $default
+      AutoDeploy: true
+      DefaultRouteSettings:
+        ThrottlingBurstLimit: 20
+        ThrottlingRateLimit: 10
+
+  McpInvokePermission:
+    Type: AWS::Lambda::Permission
+    Condition: HasJwt
+    Properties:
+      FunctionName: !Ref Function
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${McpApi}/*/*/mcp
+
+  ErrorsAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmDescription: !Sub ${AWS::StackName} Lambda errors
+      Namespace: AWS/Lambda
+      MetricName: Errors
+      Dimensions: [{ Name: FunctionName, Value: !Ref Function }]
+      Statistic: Sum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      TreatMissingData: notBreaching
+      AlarmActions: !If [HasAlarmTopic, [!Ref AlarmTopicArn], !Ref AWS::NoValue]
+
+  ThrottlesAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmDescription: !Sub ${AWS::StackName} Lambda throttles
+      Namespace: AWS/Lambda
+      MetricName: Throttles
+      Dimensions: [{ Name: FunctionName, Value: !Ref Function }]
+      Statistic: Sum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      TreatMissingData: notBreaching
+      AlarmActions: !If [HasAlarmTopic, [!Ref AlarmTopicArn], !Ref AWS::NoValue]
+
+Outputs:
+  GraphqlUrl:
+    Description: GraphQL endpoint (IAM / SigV4)
+    Value: !Sub "${FunctionUrl.FunctionUrl}graphql"
+  McpUrlIam:
+    Description: MCP endpoint for SigV4-capable clients
+    Value: !Sub "${FunctionUrl.FunctionUrl}mcp"
+  McpUrlJwt:
+    Condition: HasJwt
+    Description: MCP endpoint behind the JWT authorizer
+    Value: !Sub "https://${McpApi}.execute-api.${AWS::Region}.amazonaws.com/mcp"
+  FunctionName:
+    Value: !Ref Function
